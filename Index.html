@@ -11,9 +11,6 @@
   --dark-bg: #080a0c;
   --card-bg: rgba(25, 28, 33, 0.85);
   --profile-img: url('profile.jpg');
-  --img-format: url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1600');
-  --img-e80: url('https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?w=1600');
-  --img-horeca: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600');
  }
 
  body { margin: 0; font-family: "Inter", sans-serif; background: var(--dark-bg); color: #eee; scroll-behavior: smooth; }
@@ -73,8 +70,42 @@
     align-items: center; padding: 0 15px; font-size: 11px; 
     z-index: 1600; font-family: sans-serif; border-bottom: 1px solid #333; 
 }
- #exp-bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: -1; filter: blur(2px) brightness(0.3); transition: background 0.5s ease; }
- 
+/* Nuovi Sfondi Tematici */
+.bg-siemens {
+    background-color: #1a1f24 !important;
+    background-image: 
+        linear-gradient(#2a2f35 1px, transparent 1px),
+        linear-gradient(90deg, #2a2f35 1px, transparent 1px);
+    background-size: 30px 30px; /* Griglia tipica DB/LAD Siemens */
+}
+
+.bg-e80 {
+    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                url('https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=1600') center/cover !important;
+}
+
+.bg-horeca {
+    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                url('https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=1600') center/cover !important;
+}
+
+/* Effetto Scanline Animato per E80 e Cameriere */
+.scanline {
+    position: fixed; inset: 0;
+    background: linear-gradient(to bottom, transparent, rgba(155, 89, 182, 0.05), transparent);
+    height: 100px; width: 100%;
+    animation: scanlineMove 4s linear infinite;
+    pointer-events: none; z-index: 1;
+}
+
+@keyframes scanlineMove {
+    0% { transform: translateY(-100vh); }
+    100% { transform: translateY(100vh); }
+}
+
+#exp-bg-overlay {
+    position: fixed; inset: 0; z-index: -1;
+} 
 .exp-box { 
     width: 90%;
     max-width: 800px; 
@@ -117,6 +148,8 @@
    <li><button onclick="closeExpAndScroll('esperienze')">Esperienze</button></li>
    <li><button onclick="closeExpAndScroll('skills')">Competenze</button></li>
    <li><button onclick="closeExpAndScroll('contatti')">Contatti</button></li>
+   <!-- Pulsante Traduzione -->
+   <li><button id="btn-lang" onclick="toggleLanguage()" style="color: var(--orange-ind); border: 1px solid var(--orange-ind); padding: 2px 8px; border-radius: 4px;">EN</button></li>
 </ul>
  </nav>
 
@@ -172,31 +205,41 @@
  </div>
 
 <div id="exp-page">
-    <!-- Barra TIA Portal -->
-    <div class="tia-header">
+    <!-- Barra TIA Portal (si vedrà solo in Format Srl) -->
+    <div id="tia-bar" class="tia-header" style="display:none;">
         <span>Siemens - TIA Portal V17 - [Main_Program (SCL)]</span>
     </div>
 
-    <!-- Sfondi (Sotto tutto) -->
-    <div id="exp-bg"></div>
+    <!-- Contenitore Sfondo Dinamico -->
+    <div id="exp-bg-overlay"></div>
+    <div id="scanline-effect"></div>
+    
     <canvas id="tech-canvas" style="position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.5;"></canvas>
 
-    <!-- BOX CENTRATA (Contiene tutto il testo) -->
     <div class="exp-box">
         <button onclick="closeExpAndScroll('esperienze')" style="float:right; background:#333; border:1px solid var(--accent-purple); color:white; cursor:pointer; padding:5px 12px; border-radius:4px;">Chiudi ✕</button>
-        
         <h1 id="exp-title" style="color:var(--accent-purple); margin-top:0;"></h1>
-        
         <div id="exp-desc" style="line-height:1.6; color:#ddd; margin-bottom:20px;"></div>
         
-        <!-- Simulatore (Dentro il box per restare centrato) -->
-        <div id="sim-container" style="display:none;">
-            <canvas id="sim-canvas"></canvas>
-            <div style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.8); padding:10px; border-radius:8px; font-size:11px; border:1px solid var(--accent-purple); pointer-events:none;">
-                <span style="color:var(--accent-purple); font-weight:bold;">PLC SIMULATION MODE</span><br>
-                • Automatico: Premi <b style="color:var(--orange-ind);">"A"</b>
-            </div>
-        </div>
+<div id="sim-container" style="display:none;">
+    <canvas id="sim-canvas"></canvas>
+    
+    <!-- Pannello Comandi HMI -->
+    <div id="sim-controls" style="display: flex; justify-content: center; gap: 15px; padding: 15px; background: #111; border-top: 1px solid #333;">
+        <button onclick="startAuto()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: sans-serif;">START AUTO</button>
+        <button onclick="stopCycle()" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: sans-serif;">STOP</button>
+        <button onclick="resetSim()" style="background: #ffc107; color: #000; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: sans-serif;">RESET</button>
+    </div>
+	<div id="plc-console" style="background: #000; color: #0f0; font-family: 'Consolas', monospace; font-size: 11px; padding: 10px; height: 60px; overflow-y: hidden; border: 1px solid #333; margin: 10px; border-radius: 4px; line-height: 1.4; box-shadow: inset 0 0 10px rgba(0,255,0,0.1);">
+        <div id="log-content"></div>
+    </div>
+    <!-- Overlay di stato PLC -->
+    <div id="plc-status" style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.8); padding:10px; border-radius:8px; font-size:11px; border:1px solid var(--accent-purple); pointer-events:none; min-width: 150px;">
+        <span style="color:var(--accent-purple); font-weight:bold;">PLC STATUS: <span id="status-text" style="color:#fff;">IDLE</span></span><br>
+        <small id="plc-log" style="color: #888; font-family: monospace;">Attesa comando...</small>
+		
+    </div>
+</div>
     </div>
 </div>
 
@@ -207,72 +250,132 @@
  </div>
 
  <script>
- const expData = {
-  format: { title: "Format S.r.l.", desc: `Durante la mia esperienza lavorativa presso Format S.r.l., ho lavorato su impianti industriali 4.0, macchine singole e parti Safe di Siemens per diversi clienti, con trasferte in Europa di più giorni (ad esempio in Spagna, Repubblica Ceca e Austria).<br><br>
-    Ho utilizzato prevalentemente il linguaggio di programmazione <b>AWL</b>, ma anche <b>Ladder e SCL</b>, lavorando principalmente con apparecchiature <b>Siemens</b> e i Tool: <b>TIA Portal e SIMATIC Manager</b>.<br><br>
-    Ho inoltre sviluppato programmi per apparecchiature <b>Omron</b> utilizzando CX- Programmer e Sysmac Studio, utilizzando linguaggo Ladder e linguaggio strutturato Omron (ST).<br><br>
-    Oltre a queste competenze, ho acquisito capacità nella lettura di schemi elettrici e layout elettrici, con esperienza anche nel cablaggio di base.`,
-	bg: "linear-gradient(135deg, rgba(8, 10, 12, 0.95) 30%, rgba(155, 89, 182, 0.3) 100%), url('https://images.unsplash.com/photo-1518770660439-4636190af475?w=1600')" },
-  e80: { title: "E80 Group", desc: `Durante il mio stage ho lavorato nel reparto montaggio di componenti elettrici per LGV. In quel periodo ho imparato a usare gli strumenti giusti, a fare collegamenti elettrici precisi e a seguire le istruzioni tecniche con attenzione`, bg: "var(--img-e80)" },
-  horeca: { title: "Cameriere Capo Sala", desc: `Durante questa esperienza lavorativa, ho gestito il personale, accolto i clienti e assistito durante il servizio. Ho migliorato la mia comunicazine e l'attenzione ai dettaglio`, bg: "var(--img-horeca)" }
- };
 
-function openExp(id){ 
+let currentLang = 'it';
+
+// Riaggiungiamo expData che era sparito, usandolo come "buffer" per le modali
+const expData = {
+    format: { title: "", desc: "" },
+    e80: { title: "", desc: "" },
+    horeca: { title: "", desc: "" }
+};
+
+const translations = {
+    it: {
+        nav: ["Home", "Esperienze", "Competenze", "Contatti"],
+        hero: ["Mattia Costi", "Programmatore PLC | Automazione Industriale 4.0"],
+        titles: ["Esperienze Professionali", "Istruzione", "Competenze Tecniche", "Contatti"],
+        exp: {
+            format: { title: "Format S.r.l.", role: "Programmatore PLC & Commissioning Engineer", desc: "Durante la mia esperienza lavorativa presso Format S.r.l., ho lavorato su impianti industriali 4.0, macchine singole e parti Safe di Siemens per diversi clienti, con trasferte in Europa di più giorni.<br><br>Ho utilizzato prevalentemente il linguaggio di programmazione <b>AWL</b>, ma anche <b>Ladder e SCL</b>, lavorando principalmente con apparecchiature <b>Siemens</b> e i Tool: <b>TIA Portal e SIMATIC Manager</b>.<br><br>Ho acquisito capacità nella lettura di schemi elettrici e layout elettrici, con esperienza anche nel cablaggio di base." },
+            e80: { title: "E80 Group", role: "Stage Tecnico - Montaggio & Cablaggio LGV", desc: "Durante il mio stage ho lavorato nel reparto montaggio di componenti elettrici per LGV. In quel periodo ho imparato a usare gli strumenti giusti, a fare collegamenti elettrici precisi." },
+            horeca: { title: "Cameriere Capo Sala", role: "Cameriere / Capo Sala", desc: "Durante questa esperienza lavorativa, ho gestito il personale, accolto i clienti e assistito durante il servizio. Ho migliorato la mia comunicazione e l'attenzione ai dettagli." }
+        },
+        plc: {
+            status: "STATO PLC", idle: "Attesa comando da HMI...", run_conveyor: "Rulliera: Trasporto pallet...",
+            req_hsh: "REQ: Richiesta Handshake da Rulliera (Q0.5)", align: "PLC: Allineamento assi...",
+            ack_hsh: "ACK: Traslo in quota. Handshake OK (I0.5)", forks_out: "FORCHE: Estensione per presa...",
+            forks_in: "FORCHE: Rientrate. Pallet a bordo.", travel: "POS: Viaggio a target Y...",
+            target: "POS: Target raggiunto. Avvio sbarco.", deposit: "DEPOSITO: Posizionamento in centro...",
+            done: "SBARCO: Pallet depositato correttamente", cycle_end: "CICLO COMPLETATO.",
+            ready: "In attesa di nuovo ciclo...", cmd_start: "CMD: START Ciclo Automatico da HMI",
+            cmd_stop: "CMD: STOP Emergenza richiesto", cmd_reset: "CMD: RESET Sistema effettuato"
+        }
+    },
+    en: {
+        nav: ["Home", "Experiences", "Skills", "Contacts"],
+        hero: ["Mattia Costi", "PLC Programmer | Industrial Automation 4.0"],
+        titles: ["Professional Experiences", "Education", "Technical Skills", "Contacts"],
+        exp: {
+            format: { title: "Format S.r.l.", role: "PLC Programmer & Commissioning Engineer", desc: "During my experience at Format S.r.l., I worked on Industry 4.0 plants and Siemens Safety systems. I mainly used <b>STL (AWL)</b>, Ladder and SCL." },
+            e80: { title: "E80 Group", role: "Technical Internship - LGV Assembly & Wiring", desc: "During my internship, I worked in the electrical assembly department for LGVs, learning to use professional tools and perform precise wiring." },
+            horeca: { title: "Head Waiter", role: "Head Waiter / Floor Manager", desc: "Managed staff and customers during service. Improved communication skills and attention to detail." }
+        },
+        plc: {
+            status: "PLC STATUS", idle: "Waiting for HMI command...", run_conveyor: "Conveyor: Moving pallet...",
+            req_hsh: "REQ: Handshake Request (Q0.5)", align: "PLC: Axis alignment...",
+            ack_hsh: "ACK: Handshake OK (I0.5)", forks_out: "FORKS: Extension for pickup...",
+            forks_in: "FORKS: Retracted. Pallet on board.", travel: "POS: Traveling to Y target...",
+            target: "POS: Target reached. Starting unload.", deposit: "UNLOAD: Positioning in center...",
+            done: "UNLOAD: Pallet deposited successfully", cycle_end: "CYCLE COMPLETED.",
+            ready: "Waiting for new cycle...", cmd_start: "CMD: HMI Automatic START received",
+            cmd_stop: "CMD: Emergency STOP requested", cmd_reset: "CMD: System RESET performed"
+        }
+    }
+};
+
+// Inizializziamo expData con la lingua di default (IT)
+for(let id in translations.it.exp) {
+    expData[id].title = translations.it.exp[id].title;
+    expData[id].desc = translations.it.exp[id].desc;
+}
+
+
+ // --- GESTIONE APERTURA/CHIUSURA PAGINE ESPERIENZA ---
+ function openExp(id){ 
     const d = expData[id]; 
+    const page = document.getElementById('exp-page');
+    const bgOverlay = document.getElementById('exp-bg-overlay');
+    const tiaBar = document.getElementById('tia-bar');
+    const scanline = document.getElementById('scanline-effect');
+    const tCanvas = document.getElementById('tech-canvas');
+    const tCtx = tCanvas.getContext('2d');
+
     document.getElementById('exp-title').innerHTML = d.title; 
     document.getElementById('exp-desc').innerHTML = d.desc; 
     
-    // Mostra il popup
-    const page = document.getElementById('exp-page');
+    // Reset stati e pulizia SCL
+    bgOverlay.className = ""; 
+    tiaBar.style.display = "none";
+    scanline.className = "";
+    if (tID) cancelAnimationFrame(tID);
+    tCtx.clearRect(0, 0, tCanvas.width, tCanvas.height);
+
+    // Mostriamo la pagina
     page.style.display = 'block';
-    page.scrollTop = 0; // Torna in alto ogni volta che apri
+    page.scrollTop = 0;
 
     if(id === 'format') {
+        bgOverlay.classList.add('bg-siemens');
+        tiaBar.style.display = "flex";
         document.getElementById('sim-container').style.display = 'block';
-        initSim(); // Avvia simulatore
-        initTechBg(); // Avvia SCL verticale
-    } else {
+        
+        // Avvio simulazione e SCL dopo rendering
+        setTimeout(() => {
+            initSim(); 
+            initTechBg();
+        }, 50);
+    } 
+    else {
         document.getElementById('sim-container').style.display = 'none';
-        stopSim();
-        if(tID) cancelAnimationFrame(tID);
-        // Pulisce il canvas se non è Format
-        const tCtx = document.getElementById('tech-canvas').getContext('2d');
-        tCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        stopSim(); // Ferma canvas simulazione
+        if(id === 'e80') bgOverlay.classList.add('bg-e80');
+        if(id === 'horeca') bgOverlay.classList.add('bg-horeca');
+        scanline.classList.add('scanline');
     }
 }
 
 function closeExpAndScroll(targetId) {
-    // 1. Chiude il foglio delle esperienze
     const expPage = document.getElementById('exp-page');
     expPage.style.display = 'none';
-
-    // 2. Ferma tutte le animazioni attive per risparmiare risorse
     stopSim(); 
     if (tID) cancelAnimationFrame(tID);
 
-    // 3. Piccola pausa per assicurarsi che il layout sia tornato alla home
     setTimeout(() => {
         const el = document.getElementById(targetId);
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 10);
 }
 
- // --- CANVAS ANIMATION ---
+ // --- CANVAS BACKGROUND (Particelle Home) ---
  const canvas = document.getElementById('canvas-bg');
  const ctx = canvas.getContext('2d');
  let particles = [];
-
- function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
- }
- window.addEventListener('resize', resize);
- resize();
-
  const mouse = { x: null, y: null };
+
+ function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+ window.addEventListener('resize', resize);
  window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+ resize();
 
  class Particle {
     constructor() {
@@ -282,25 +385,13 @@ function closeExpAndScroll(targetId) {
         this.speedY = (Math.random() - 0.5) * 0.5;
     }
     update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
+        this.x += this.speedX; this.y += this.speedY;
         if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
         if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
-
-        let dx = mouse.x - this.x;
-        let dy = mouse.y - this.y;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist < 150) {
-            this.x += dx * 0.01;
-            this.y += dy * 0.01;
-        }
+        let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+        if (Math.sqrt(dx*dx + dy*dy) < 150) { this.x += dx * 0.01; this.y += dy * 0.01; }
     }
-    draw() {
-        ctx.fillStyle = '#9b59b6';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-    }
+    draw() { ctx.fillStyle = '#9b59b6'; ctx.beginPath(); ctx.arc(this.x, this.y, 1.5, 0, Math.PI * 2); ctx.fill(); }
 }
 
  function drawLines() {
@@ -308,300 +399,365 @@ function closeExpAndScroll(targetId) {
         for (let j = i; j < particles.length; j++) {
             let dx = particles[i].x - particles[j].x;
             let dy = particles[i].y - particles[j].y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < 150) {
-                ctx.strokeStyle = `rgba(155, 89, 182, ${1 - distance/150})`;
-                ctx.lineWidth = 0.5;
-                ctx.beginPath();
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 150) {
+                ctx.strokeStyle = `rgba(155, 89, 182, ${1 - dist/150})`;
+                ctx.lineWidth = 0.5; ctx.beginPath();
                 ctx.moveTo(particles[i].x, particles[i].y);
-                ctx.lineTo(particles[j].x, particles[j].y);
-                ctx.stroke();
+                ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke();
             }
         }
     }
  }
 
- function init() {
-    particles = [];
-    for (let i = 0; i < 80; i++) particles.push(new Particle());
- }
-
  function animate() {
-    ctx.fillStyle = '#080a0c';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#080a0c'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     particles.forEach(p => { p.update(); p.draw(); });
-    drawLines();
-    requestAnimationFrame(animate);
+    drawLines(); requestAnimationFrame(animate);
  }
-
- init();
+ particles = []; for (let i = 0; i < 80; i++) particles.push(new Particle());
  animate();
  
- // --- LOGICA SIMULAZIONE TRASLO-ELEVATORE ---
+ // ============================================================
+ // --- LOGICA SIMULAZIONE TRASLO-ELEVATORE (HMI/PLC) ---
+ // ============================================================
 const sCanvas = document.getElementById('sim-canvas');
 const sCtx = sCanvas.getContext('2d');
 let simActive = false;
-let simID; // <--- AGGIUNGI QUESTA RIGA: serve a memorizzare il ciclo di animazione
+let simID;
 
-// Configurazione Oggetti Aggiornata
-let traslo = { x: 150, y: 150, w: 40, h: 60 }; // Binario fisso a x:150
-let pallet = { x: 600, y: 50, w: 30, h: 30, aBordo: false };
-let conveyorY = 50; 
-let scambioX = 185; // Punto di arresto del pallet per il carico
-let magazzinoX = 50;
+// --- 1. UNICA DEFINIZIONE VARIABILI DI STATO ---
+let traslo = { x: 150, y: 150, w: 40, h: 60 }; // x fissa (binario)
+let pallet = { x: 600, y: 50, w: 50, h: 30, aBordo: false }; // w,h corretti x rettangolo arancione
+let forcheX = 0;       // Estensione forche (0=rientrate, 30=carico, -30=scarico)
+let stepHandshake = 0; // Gestore sequenza PLC
 let autoCycle = false;
+let scambioX = 200;    // Punto di carico
 
 function initSim() {
-    sCanvas.width = document.querySelector('.exp-box').clientWidth;
+    const container = document.getElementById('sim-container');
+    sCanvas.width = container.clientWidth;
     sCanvas.height = 300;
     simActive = true;
-
-    // --- AGGIUNGI QUESTA RIGA ---
+    updateStatus("IDLE", "Attesa comando da HMI...");
     if (simID) cancelAnimationFrame(simID); 
-    
     simID = requestAnimationFrame(runSim);
 }
 
 function stopSim() { 
-    simActive = false; 
-    autoCycle = false; 
-    // --- AGGIUNGI QUESTA RIGA ---
+    simActive = false; autoCycle = false; 
     cancelAnimationFrame(simID); 
 }
 
-// Input tastiera per simulazione
-window.addEventListener('keydown', (e) => {
-    if(!simActive) return;
-    if(e.key === 'a' || e.key === 'A') autoCycle = true;
-    
-// Manuale (Solo asse Y per il traslo, X per il pallet sul conveyor)
-    if(!autoCycle) {
-        if(e.key === 'ArrowUp') traslo.y -= 5;
-        if(e.key === 'ArrowDown') traslo.y += 5;
-        if(e.key === 'ArrowLeft' && pallet.x > scambioX) pallet.x -= 5;
-        if(e.key === 'ArrowRight') pallet.x += 5;
-    }
-});
-
+// --- 2. LOGICA GRAFICA E PLC (Sequence Control) ---
 function runSim() {
    if(!simActive) return;
     
-    // Reset Canvas
-    sCtx.fillStyle = "#0a0a0a";
+    // Background
+    sCtx.fillStyle = "#050505";
     sCtx.fillRect(0, 0, sCanvas.width, sCanvas.height);
 
-    // 1. DISEGNO RULLIERA (Conveyor orizzontale)
-    sCtx.strokeStyle = "#333";
-    sCtx.lineWidth = 2;
-    for(let i=0; i<25; i++) {
-        sCtx.strokeRect(scambioX + (i*20), conveyorY, 20, 40);
+    // A. DISEGNO RULLIERA CARICO
+    sCtx.strokeStyle = "#333"; sCtx.lineWidth = 2;
+    for(let i=0; i<25; i++) { sCtx.strokeRect(scambioX + (i*20), 50, 20, 40); }
+
+    // B. DISEGNO SCAFFALI MAGAZZINO (Sinistra)
+    sCtx.fillStyle = "#111"; sCtx.fillRect(20, 20, 100, 260);
+    sCtx.strokeStyle = "#333"; sCtx.strokeRect(20, 20, 100, 260);
+    // Ripiani
+    sCtx.beginPath(); sCtx.moveTo(20, 100); sCtx.lineTo(120, 100); 
+    sCtx.moveTo(20, 180); sCtx.lineTo(120, 180); sCtx.stroke();
+
+    // C. DISEGNO TRASLO (Struttura rinforzata)
+    sCtx.fillStyle = "rgba(155, 89, 182, 0.2)"; 
+    sCtx.fillRect(traslo.x, 20, 15, 260); // Colonna verticale più spessa
+    
+    // Carrello bianco con ombra interna
+    sCtx.fillStyle = "#ffffff"; 
+    sCtx.fillRect(traslo.x - 20, traslo.y, traslo.w + 10, traslo.h); 
+    sCtx.strokeStyle = "#ccc";
+    sCtx.strokeRect(traslo.x - 20, traslo.y, traslo.w + 10, traslo.h);
+
+    // Sensore Ottico (Punto rosso sul carrello)
+    sCtx.fillStyle = "#ff0000";
+    sCtx.beginPath(); sCtx.arc(traslo.x - 15, traslo.y + 35, 3, 0, Math.PI*2); sCtx.fill(); 
+
+// D. DISEGNO FORCHE (Acciaio industriale)
+    sCtx.strokeStyle = "#7f8c8d"; sCtx.lineWidth = 6;
+    sCtx.lineCap = "round"; // Punta della forca arrotondata
+    sCtx.beginPath();
+    sCtx.moveTo(traslo.x - 20, traslo.y + 25);
+    sCtx.lineTo(traslo.x - 20 + forcheX, traslo.y + 25);
+    sCtx.moveTo(traslo.x - 20, traslo.y + 45);
+    sCtx.lineTo(traslo.x - 20 + forcheX, traslo.y + 45);
+    sCtx.stroke();
+
+    // E. LOGICA AGGANCIO (Sincronizzazione pallet-forche)
+    if(pallet.aBordo) {
+        // Il pallet (w:50) viene centrato sulle forche
+        pallet.x = traslo.x - 22 + forcheX; 
+        pallet.y = traslo.y + 10;
     }
+   // F. DISEGNO PALLET DETTAGLIATO
+    sCtx.fillStyle = "#f39c12"; // Legno chiaro
+    sCtx.fillRect(pallet.x, pallet.y, pallet.w, pallet.h);
+    
+    // Ombre delle assi
+    sCtx.strokeStyle = "rgba(0,0,0,0.15)";
+    sCtx.lineWidth = 1;
+    for(let i=1; i<3; i++) {
+        sCtx.beginPath();
+        sCtx.moveTo(pallet.x, pallet.y + (i*10));
+        sCtx.lineTo(pallet.x + 50, pallet.y + (i*10));
+        sCtx.stroke();
+    }
+    
+    // Piedini alla base (i blocchetti del pallet)
+    sCtx.fillStyle = "#a35200"; // Legno scuro
+    sCtx.fillRect(pallet.x + 2, pallet.y + 24, 12, 6);
+    sCtx.fillRect(pallet.x + 19, pallet.y + 24, 12, 6);
+    sCtx.fillRect(pallet.x + 36, pallet.y + 24, 12, 6);
 
-    // 2. DISEGNO SCAFFALI MAGAZZINO
-    sCtx.fillStyle = "#1a1a1a";
-    sCtx.fillRect(20, 20, 100, 260);
-    sCtx.strokeStyle = varProp('--accent-purple');
-    sCtx.strokeRect(20, 20, 100, 260);
-
-    // 3. LOGICA PLC (Automatico)
-// 3. LOGICA PLC (Automatico)
-// 3. LOGICA PLC (Automatico)
+   // G. LOGICA PLC (Automatic Cycle con chiavi traduzione)
     if(autoCycle) {
-        if(!pallet.aBordo) {
-            // FASE 1: Il conveyor porta il pallet al punto di scambio
+        // Step 1: Avvicinamento Pallet su rulliera
+        if(!pallet.aBordo && stepHandshake === 0) {
             if(pallet.x > scambioX) {
-                pallet.x -= 2; 
+                pallet.x -= 2;
+                updateStatus("RUN", "run_conveyor"); // Chiave corretta
             } else {
-                // FASE 2: Allineamento verticale traslo con pallet
-                // Centriamo il carrello (traslo.y) rispetto al pallet
-                if(Math.abs(traslo.y - (pallet.y - 15)) > 5) {
-                    traslo.y += (pallet.y - 15 > traslo.y) ? 2 : -2;
-                } else {
-                    pallet.aBordo = true; // Carico effettuato
-                }
+                stepHandshake = 1; 
+                addLog("req_hsh"); // Chiave corretta
             }
-        } else {
-            // FASE 3: Traslo muove verticalmente verso il piano dello scaffale
-            let targetDepositoY = 180; 
-            if(Math.abs(traslo.y - targetDepositoY) > 5) {
-                traslo.y += (targetDepositoY > traslo.y) ? 2 : -2;
+        } 
+        
+        // Step 2: Allineamento e ACK
+        else if(stepHandshake === 1) {
+            updateStatus("RUN", "align"); // Chiave corretta
+            if(Math.abs(traslo.y - (pallet.y - 15)) > 2) {
+                traslo.y += (pallet.y - 15 > traslo.y) ? 2 : -2;
             } else {
-                // FASE 4: SCARICO A SINISTRA
-                // Muoviamo il pallet verso lo scaffale (X=40)
-                if(pallet.x > 40) {
-                    pallet.x -= 2; 
-                } else {
-                    // FASE 5: SGANCIO E RESET
-                    pallet.aBordo = false; 
-                    autoCycle = false; // Ferma il ciclo per un istante
-                    
-                    // Delay per il reset (Simula il tempo di sgancio meccanico)
-                    setTimeout(() => {
-                        pallet.x = 600; 
-                        pallet.y = 50;
-                        traslo.y = 100; // Torna in posizione di home
-                        autoCycle = true; // Riapre il ciclo
-                    }, 1000);
-                }
+                addLog("ack_hsh"); // Chiave corretta
+                stepHandshake = 2;
+            }
+        }
+        // Step 3: Uscita Forche (PRESA)
+        else if(stepHandshake === 2) {
+            if(forcheX < 35) { 
+                forcheX += 3;
+                updateStatus("RUN", "forks_out"); // Chiave corretta
+            } else {
+                pallet.aBordo = true; 
+                stepHandshake = 3;
+            }
+        }
+        // Step 4: Rientro Forche (CON PALLET)
+        else if(stepHandshake === 3) {
+            if(forcheX > 0) {
+                forcheX -= 3;
+            } else {
+                addLog("forks_in"); // Chiave corretta
+                stepHandshake = 4;
+            }
+        }
+        // Step 5: Viaggio a Target Magazzino
+        else if(stepHandshake === 4) {
+            let targetY = 180; 
+            if(Math.abs(traslo.y - targetY) > 2) {
+                traslo.y += (targetY > traslo.y) ? 2 : -2;
+                updateStatus("RUN", "travel"); // Chiave corretta
+            } else {
+                addLog("target"); // Chiave corretta
+                stepHandshake = 5;
+            }
+        }
+		// Step 6: Uscita Forche (DEPOSITO)
+        else if(stepHandshake === 5) {
+            if(forcheX > -75) { 
+                forcheX -= 3;
+                updateStatus("RUN", "deposit"); // Chiave corretta
+            } else {
+                pallet.aBordo = false;
+                addLog("done"); // Chiave corretta
+                stepHandshake = 6;
+            }
+        }
+        // Step 7: Rientro Forche Vuote e Reset
+        else if(stepHandshake === 6) {
+            if(forcheX < 0) {
+                forcheX += 3;
+            } else {
+                addLog("cycle_end"); // Chiave corretta
+                stepHandshake = 0; 
+                autoCycle = false;
+                updateStatus("COMPLETED", "ready"); // Chiave corretta
+
+                // Restart automatico
+                setTimeout(() => {
+                    if(simActive) {
+                        resetSimData(); 
+                        autoCycle = true;
+                        // Nota: qui potresti aggiungere una chiave "new_cycle" se vuoi tradurre anche questo
+                        addLog("ready"); 
+                    }
+                }, 2000);
             }
         }
     }
 
-// 4. AGGIORNAMENTO POSIZIONE PALLET
-    // IMPORTANTE: Il pallet segue il traslo SOLO se è a bordo 
-    // E se non siamo già nella fase di scarico (X < traslo.x)
-    if(pallet.aBordo && pallet.x >= traslo.x - 10) {
-        pallet.x = traslo.x - 10; 
-        pallet.y = traslo.y + 15;
-    }
-
-    // 5. DISEGNO TRASLO (Viola) - Binario Fisso + Carrello Mobile
-    sCtx.fillStyle = "rgba(155, 89, 182, 0.2)";
-    sCtx.fillRect(traslo.x, 20, 10, 260); // Guida verticale
-    
-    sCtx.fillStyle = "#fff"; // Carrello traslo (si muove solo su e giù)
-    sCtx.fillRect(traslo.x - 15, traslo.y, 40, 60); 
-    
-    // 6. DISEGNO PALLET (Arancione)
-    sCtx.fillStyle = "#f39c12";
-    sCtx.fillRect(pallet.x, pallet.y, pallet.w, pallet.h);
-
-simID = requestAnimationFrame(runSim);
+    simID = requestAnimationFrame(runSim);
 }
 
-// Helper per leggere variabili CSS
-function varProp(name) {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+// --- 3. FUNZIONI HMI (Pulsanti) ---
+function startAuto() {
+    if(!simActive) return;
+    autoCycle = true;
+    addLog("cmd_start"); // Sostituito testo con chiave
 }
 
-// --- EFFETTO SCRITTURA CODICE ORIZZONTALE (PLC SCL) ---
-const tCanvas = document.getElementById('tech-canvas');
-const tCtx = tCanvas.getContext('2d');
-let tID;
-let codeLines = [];
+function stopCycle() {
+    autoCycle = false;
+    addLog("cmd_stop"); // Sostituito testo con chiave
+    updateStatus("STOPPED", "cmd_stop"); 
+}
 
-// Stringhe realistiche di programmazione PLC
-const phrases = [
-    "IF \"DB_Auto\".Step = 10 THEN",
-    "  \"Valve_Control\" := TRUE;",
-    "  \"T_Safety\".IN := TRUE;",
-    "ELSIF \"Sensor_1\" = 1 THEN",
-    "  MOVE 100 TO \"Axis_Pos\";",
-    "  CALL \"FC_Check_Safety\";",
-    "  #Temp := \"IW_Analog\" * 0.1;",
-    "  FOR #i := 0 TO 5 DO",
-    "    \"Array\"[#i] := 0;",
-    "  END_FOR;",
-    "END_IF;",
-    "// Waiting for PLC feedback...",
-    "WHILE \"Axis_Busy\" DO",
-    "  \"Watchdog\" := TRUE;"
-];
+function resetSim() {
+    autoCycle = false;
+    resetSimData();
+    addLog("cmd_reset"); // Sostituito testo con chiave
+} addLog("CMD: RESET Sistema effettuato");
 
-let activeLines = []; // Array per gestire le righe a schermo
 
-function initTechBg() {
-    const tCanvas = document.getElementById('tech-canvas');
-    const tCtx = tCanvas.getContext('2d');
+// Helper reset dati meccanici
+function resetSimData() {
+    pallet.x = 600; pallet.y = 50; pallet.aBordo = false;
+    traslo.y = 150;
+    forcheX = 0;
+    stepHandshake = 0;
+    updateStatus("IDLE", "Sistema ripristinato. Pronto.");
+}
+
+// Helper HMI: Aggiorna testo stato e log principale
+function updateStatus(status, logKey) {
+    const statusEl = document.getElementById('status-text');
+    const logEl = document.getElementById('plc-log');
+    if(statusEl) statusEl.innerText = status;
+    if(logEl) logEl.innerText = translations[currentLang].plc[logKey] || logKey;
+}
+
+// Helper HMI: Aggiunge riga nel box console nera
+function addLog(messageKey) {
+    const logContent = document.getElementById('log-content');
+    if(!logContent) return;
+    const now = new Date();
+    const time = now.getHours().toString().padStart(2, '0') + ":" + 
+                 now.getMinutes().toString().padStart(2, '0') + ":" + 
+                 now.getSeconds().toString().padStart(2, '0');
     
-    // Funzione per adattare il canvas alla finestra
-    function resizeCanvas() {
-        tCanvas.width = window.innerWidth;
-        tCanvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-    
+    // Recupera la traduzione basata sulla chiave
+    const message = translations[currentLang].plc[messageKey] || messageKey;
+
+    const newEntry = document.createElement('div');
+    newEntry.innerHTML = `<span style="color: #666;">[${time}]</span> <span style="color: #9b59b6;">SYS:</span> ${message}`;
+    logContent.appendChild(newEntry);
+    if (logContent.childNodes.length > 3) { logContent.removeChild(logContent.firstChild); }
+}
+
+ // --- EFFETTO SFONDO SCL (Scritte viola Format Srl) ---
+ const tCanvas = document.getElementById('tech-canvas');
+ const tCtx = tCanvas.getContext('2d');
+ let tID;
+ const phrases = [
+    "IF \"DB_Auto\".Step = 10 THEN", "\"Valve_Control\" := TRUE;", "\"T_Safety\".IN := TRUE;",
+    "ELSIF \"Sensor_1\" = 1 THEN", "MOVE 100 TO \"Axis_Pos\";", "CALL \"FC_Check_Safety\";",
+    "FOR #i := 0 TO 5 DO", "END_FOR;", "END_IF;", "// Waiting for PLC feedback...",
+    "WHILE \"Axis_Busy\" DO", "  \"Watchdog\" := TRUE;"
+ ];
+ let activeLines = [];
+
+ function initTechBg() {
+    tCanvas.width = window.innerWidth; tCanvas.height = window.innerHeight;
     activeLines = []; 
     
     function updateSCL() {
         tCtx.clearRect(0, 0, tCanvas.width, tCanvas.height);
         tCtx.font = "15px 'Consolas', monospace";
 
-        // Aumentata la frequenza e il limite per riempire la pagina
         if (Math.random() > 0.90 && activeLines.length < 50) { 
             activeLines.push({
                 text: phrases[Math.floor(Math.random() * phrases.length)],
-                // X casuale tra il 5% e l'85% della larghezza schermo
                 x: Math.random() * (tCanvas.width * 0.8), 
-                y: tCanvas.height + 20, 
-                opacity: 1,
-                chars: 0,
-                speed: 0.5 + Math.random() * 0.5 // Velocità variabile per profondità
+                y: tCanvas.height + 20, opacity: 1, chars: 0, speed: 0.5 + Math.random() * 0.5
             });
         }
 
         activeLines.forEach((line) => {
-            // Syntax Highlighting
+            // Syntax Highlighting base
             if (line.text.includes("IF") || line.text.includes("END")) tCtx.fillStyle = "#569cd6";
             else if (line.text.includes("//")) tCtx.fillStyle = "#6a9955";
             else tCtx.fillStyle = "#d4d4d4";
 
-            tCtx.globalAlpha = line.opacity * 0.3; // Leggermente più trasparente
+            tCtx.globalAlpha = line.opacity * 0.2; // Molto soffuso
             tCtx.fillText(line.text.substring(0, Math.floor(line.chars)), line.x, line.y);
             
-            // Movimento verticale
-            line.y -= line.speed; 
-            
-            // Effetto scrittura
-            if (line.chars < line.text.length) line.chars += 0.4;
-
-            // Dissolvenza graduale verso l'alto
-            if (line.y < 200) line.opacity -= 0.005;
+            line.y -= line.speed; // Risale
+            if (line.chars < line.text.length) line.chars += 0.4; // Scrittura
+            if (line.y < 200) line.opacity -= 0.005; // Dissolvenza in alto
         });
-
         activeLines = activeLines.filter(l => l.opacity > 0);
         tID = requestAnimationFrame(updateSCL);
     }
-
     if(tID) cancelAnimationFrame(tID);
     updateSCL();
 }
 
-function drawCode(tCanvas, tCtx) {
-    // 1. Pulisce il canvas a ogni frame per l'animazione
-    tCtx.clearRect(0, 0, tCanvas.width, tCanvas.height);
+function toggleLanguage() {
+    currentLang = currentLang === 'it' ? 'en' : 'it';
+    const lang = translations[currentLang];
+    const btn = document.getElementById('btn-lang');
     
-    // 2. Imposta il font (Consolas è il classico dei sistemi Siemens/Windows)
-    tCtx.font = "14px 'Consolas', 'Courier New', monospace";
+    // Aggiorna pulsante Navbar
+    btn.innerText = currentLang === 'it' ? 'EN' : 'IT';
 
-    codeLines.forEach(line => {
-        // Calcola quanto testo mostrare (effetto macchina da scrivere)
-        let visibleText = line.text.substring(0, Math.floor(line.chars));
-        
-        // 3. LOGICA COLORI (Syntax Highlighting)
-        if (line.text.includes("IF") || line.text.includes("THEN") || line.text.includes("END_IF") || line.text.includes("WHILE")) {
-            tCtx.fillStyle = "#569cd6"; // Celeste: Keyword di controllo
-        } else if (line.text.includes("//")) {
-            tCtx.fillStyle = "#6a9955"; // Verde: Commenti
-        } else if (line.text.includes("\"") || line.text.includes(":=")) {
-            tCtx.fillStyle = "#ce9178"; // Arancione/Pesca: Variabili e Assegnazioni
-        } else {
-            tCtx.fillStyle = "#d4d4d4"; // Bianco sporco: Testo generico
-        }
+    // Aggiorna link Navbar
+    const navLinks = document.querySelectorAll('.nav-links button');
+    lang.nav.forEach((text, i) => { if(navLinks[i]) navLinks[i].innerText = text; });
 
-        // 4. DISEGNO SUL CANVAS
-        tCtx.globalAlpha = 0.5; // Opacità per non disturbare la lettura dei testi sopra
-        tCtx.fillText(visibleText, line.x, line.y);
-        
-        // 5. MOVIMENTO E PROGRESSIONE
-        line.x += line.speed; // Spostamento orizzontale
-        
-        if (line.chars < line.text.length) {
-            line.chars += 0.2; // Velocità di "scrittura" del testo
-        }
+    // Aggiorna Hero
+    document.querySelector('.hero-text h1').innerText = lang.hero[0];
+    document.querySelector('.hero-text p strong').innerText = lang.hero[1];
 
-        // 6. RESET RIGHE (quando escono dallo schermo a destra)
-        if (line.x > tCanvas.width) {
-            line.x = -350; // Rientra da sinistra
-            line.y = Math.random() * tCanvas.height; // Nuova altezza casuale
-            line.chars = 0; // Ricomincia a scrivere da capo
-            line.text = phrases[Math.floor(Math.random() * phrases.length)]; // Nuova frase casuale
-        }
+    // Aggiorna Titoli Sezioni
+    const sectionTitles = document.querySelectorAll('.section h2');
+    lang.titles.forEach((text, i) => { if(sectionTitles[i]) sectionTitles[i].innerText = text; });
+
+    // Aggiorna Timeline (Esperienze nella home)
+    const items = document.querySelectorAll('.exp-item');
+    const ids = ['format', 'e80', 'horeca'];
+    items.forEach((item, i) => {
+        const id = ids[i];
+        item.querySelector('.exp-title').innerText = lang.exp[id].title;
+        item.querySelector('.exp-role').innerText = lang.exp[id].role;
+		
+		
+		// Aggiorna etichette statiche HMI
+    const plcStatusLabel = document.querySelector('#plc-status b');
+    if(plcStatusLabel) plcStatusLabel.firstChild.textContent = lang.plc.status + ": ";
+    
+    // Aggiorna pulsanti HMI
+    const simBtns = document.querySelectorAll('#sim-controls button');
+    if(simBtns.length > 0) {
+        simBtns[0].innerText = currentLang === 'it' ? "START AUTO" : "AUTO START";
+        simBtns[1].innerText = "STOP"; // Stop è universale
+        simBtns[2].innerText = "RESET";
+    }
     });
 
-    // 7. Loop dell'animazione
-    tID = requestAnimationFrame(() => drawCode(tCanvas, tCtx));
+    // Sincronizza expData per le finestre modali
+    for (let id in lang.exp) {
+        expData[id].title = lang.exp[id].title;
+        expData[id].desc = lang.exp[id].desc;
+    }
 }
  </script>
 </body>
