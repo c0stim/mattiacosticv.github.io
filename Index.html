@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+ <meta charset="UTF-8">
+ <title>Mattia Costi | PLC Programmer</title>
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+ :root {
+  --accent-purple: #9b59b6; 
+  --orange-ind: #f39c12;
+  --dark-bg: #080a0c;
+  --card-bg: rgba(25, 28, 33, 0.85);
+  --profile-img: url('profile.jpg');
+  --img-format: url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1600');
+  --img-e80: url('https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?w=1600');
+  --img-horeca: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600');
+ }
+
+ body { margin: 0; font-family: "Inter", sans-serif; background: var(--dark-bg); color: #eee; scroll-behavior: smooth; }
+
+ /* NAVBAR */
+ .navbar { position: fixed; top: 0; left: 0; width: 100%; padding: 15px 40px; background: rgba(8, 10, 12, 0.9); backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; z-index: 2000; box-shadow: 0 3px 12px rgba(0,0,0,0.5); box-sizing: border-box; }
+ .nav-left{display:flex;align-items:center;gap:12px;}
+ .nav-logo { font-size: 1.5rem; font-weight: 800; color: var(--accent-purple); }
+ .nav-avatar{ width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-purple); }
+ .nav-links { list-style: none; display: flex; gap: 22px; margin: 0; padding: 0; align-items:center; }
+ .nav-links li a, 
+ .nav-links li button {
+    background: none;
+    border: none;
+    color: #eee;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    transition: 0.2s;
+} 
+ .nav-links li a:hover, 
+ .nav-links li button:hover { color: var(--accent-purple); }
+
+ /* HERO */
+ .hero { padding: 150px 20px 80px; display: flex; justify-content: center; gap: 40px; align-items: center; }
+ .hero-img { width: 160px; height: 160px; border-radius: 50%; background: var(--profile-img) center/cover; box-shadow: 0 0 20px rgba(155, 89, 182, 0.3); border: 3px solid var(--accent-purple); }
+ .hero-text h1 { margin: 0; font-size: 3rem; color: var(--accent-purple); }
+ .hero-text p { color: #bbb; }
+
+ /* SECTIONS */
+ .section { max-width: 900px; margin: 0 auto 40px; background: var(--card-bg); padding: 35px; border-radius: 16px; border: 1px solid rgba(155, 89, 182, 0.2); backdrop-filter: blur(8px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+ .section h2 { border-left: 6px solid var(--accent-purple); padding-left: 15px; margin-bottom: 25px; color: #fff; }
+
+ /* TIMELINE */
+ .timeline { border-left: 3px solid var(--accent-purple); padding-left: 25px; }
+ .exp-item { margin-bottom: 35px; cursor: pointer; transition: 0.3s; }
+ .exp-item:hover { transform: translateX(8px); }
+ .exp-title { font-size: 1.4rem; color: var(--accent-purple); font-weight: 700; }
+ .exp-role { color: #ddd; margin: 5px 0; }
+ .exp-date { color: var(--orange-ind); font-size: .9rem; font-weight: 600; }
+
+#exp-page { 
+    position: fixed; 
+    inset: 0; 
+    background: #080a0c; 
+    display: none; 
+    z-index: 1500; 
+    overflow-y: auto; /* Permette lo scroll se il testo è lungo */
+    padding-bottom: 50px;
+}
+
+.tia-header { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 30px; 
+    background: #003b66; color: #d4d4d4; display: flex; 
+    align-items: center; padding: 0 15px; font-size: 11px; 
+    z-index: 1600; font-family: sans-serif; border-bottom: 1px solid #333; 
+}
+ #exp-bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: -1; filter: blur(2px) brightness(0.3); transition: background 0.5s ease; }
+ 
+.exp-box { 
+    width: 90%;
+    max-width: 800px; 
+    margin: 100px auto 40px; /* Centra orizzontalmente con 'auto' */
+    background: rgba(20, 22, 26, 0.98); 
+    padding: 40px; 
+    border-left: 8px solid var(--orange-ind); 
+    border-radius: 12px; 
+    border: 1px solid rgba(155, 89, 182, 0.3); 
+    position: relative; 
+    z-index: 10; 
+    box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+    box-sizing: border-box; /* Importante per il padding */
+}
+
+ .exp-box b { color: var(--accent-purple); }
+
+ /* CANVAS STYLE */
+ #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; background: #080a0c; }
+
+ /* SIMULATORE */
+ #sim-container {
+    box-shadow: 0 0 30px rgba(155, 89, 182, 0.2);
+    border: 2px solid rgba(155, 89, 182, 0.4) !important;
+    background: #050505 !important;
+    margin-top:30px; border-radius:12px; overflow:hidden; position:relative;
+ }
+ </style>
+</head>
+<body>
+ <canvas id="canvas-bg"></canvas>
+ <div id="top"></div>
+ <nav class="navbar">
+  <div class="nav-left">
+    <img id="nav-avatar" class="nav-avatar" src="profile.jpg" alt="Foto profilo" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'72\' height=\'72\'><rect width=\'100%\' height=\'100%\' fill=\'%239b59b6\'/><text x=\'50%\' y=\'55%\' font-size=\'22\' text-anchor=\'middle\' fill=\'white\' font-family=\'Arial\'>MC</text></svg>'" />
+    <div class="nav-logo">MC</div>
+  </div>
+<ul class="nav-links">
+   <li><button onclick="closeExpAndScroll('top')">Home</button></li>
+   <li><button onclick="closeExpAndScroll('esperienze')">Esperienze</button></li>
+   <li><button onclick="closeExpAndScroll('skills')">Competenze</button></li>
+   <li><button onclick="closeExpAndScroll('contatti')">Contatti</button></li>
+</ul>
+ </nav>
+
+ <section class="hero">
+  <div class="hero-img"></div>
+  <div class="hero-text">
+   <h1>Mattia Costi</h1>
+   <p><strong>Programmatore PLC | Automazione Industriale 4.0</strong></p>
+  </div>
+ </section>
+
+ <div class="section" id="esperienze">
+  <h2>Esperienze Professionali</h2>
+  <div class="timeline">
+   <div class="exp-item" onclick="openExp('format')">
+    <div class="exp-title">Format S.r.l.</div>
+    <div class="exp-role">Programmatore PLC & Commissioning Engineer</div>
+    <div class="exp-date">Ott.2023 – Attuale</div>
+   </div>
+   <div class="exp-item" onclick="openExp('e80')">
+    <div class="exp-title">E80 Group</div>
+    <div class="exp-role">Stage Tecnico - Montaggio & Cablaggio LGV</div>
+    <div class="exp-date">Feb.2023 – Feb.2023</div>
+   </div>
+   <div class="exp-item" onclick="openExp('horeca')">
+    <div class="exp-title">Cameriere</div>
+    <div class="exp-role">Cameriere / Capo Sala</div>
+    <div class="exp-date">Giu.2022 – Gen.2024</div>
+   </div>
+  </div>
+ </div>
+
+ <div class="section">
+  <h2>Istruzione</h2>
+  <p><strong style="color:var(--accent-purple)">Diploma ITI Cattaneo - Dall'Aglio</strong><br> Elettronica ed Elettrotecnica - Articolazione Automazione</p>
+ </div>
+
+ <div class="section" id="skills">
+  <h2>Competenze Tecniche</h2>
+  <h3 style="color:var(--accent-purple)">PLC & Automazione</h3>
+  <ul>
+   <li>Siemens Step7, TIA Portal</li>
+   <li>AWL, Ladder, SCL</li>
+   <li>Safety PLC (F-CPU)</li>
+   <li>Omron CX-Programmer, Sysmac</li>
+  </ul>
+  <h3 style="color:var(--accent-purple)">Software & Tools</h3>
+  <ul>
+   <li>Simatic Manager</li>
+   <li>Fieldbus & comunicazioni industriali</li>
+   <li>Diagnostica & Commissioning</li>
+  </ul>
+ </div>
+
+<div id="exp-page">
+    <!-- Barra TIA Portal -->
+    <div class="tia-header">
+        <span>Siemens - TIA Portal V17 - [Main_Program (SCL)]</span>
+    </div>
+
+    <!-- Sfondi (Sotto tutto) -->
+    <div id="exp-bg"></div>
+    <canvas id="tech-canvas" style="position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.5;"></canvas>
+
+    <!-- BOX CENTRATA (Contiene tutto il testo) -->
+    <div class="exp-box">
+        <button onclick="closeExpAndScroll('esperienze')" style="float:right; background:#333; border:1px solid var(--accent-purple); color:white; cursor:pointer; padding:5px 12px; border-radius:4px;">Chiudi ✕</button>
+        
+        <h1 id="exp-title" style="color:var(--accent-purple); margin-top:0;"></h1>
+        
+        <div id="exp-desc" style="line-height:1.6; color:#ddd; margin-bottom:20px;"></div>
+        
+        <!-- Simulatore (Dentro il box per restare centrato) -->
+        <div id="sim-container" style="display:none;">
+            <canvas id="sim-canvas"></canvas>
+            <div style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.8); padding:10px; border-radius:8px; font-size:11px; border:1px solid var(--accent-purple); pointer-events:none;">
+                <span style="color:var(--accent-purple); font-weight:bold;">PLC SIMULATION MODE</span><br>
+                • Automatico: Premi <b style="color:var(--orange-ind);">"A"</b>
+            </div>
+        </div>
+    </div>
+</div>
+
+ <div class="section" id="contatti">
+  <h2>Contatti</h2>
+  <p><b>Email:</b> mattiacosti04@gmail.com</p>
+  <p><b>LinkedIn:</b> linkedin.com/in/mattia-costi-7a5028275/</p>
+ </div>
+
+ <script>
+ const expData = {
+  format: { title: "Format S.r.l.", desc: `Durante la mia esperienza lavorativa presso Format S.r.l., ho lavorato su impianti industriali 4.0, macchine singole e parti Safe di Siemens per diversi clienti, con trasferte in Europa di più giorni (ad esempio in Spagna, Repubblica Ceca e Austria).<br><br>
+    Ho utilizzato prevalentemente il linguaggio di programmazione <b>AWL</b>, ma anche <b>Ladder e SCL</b>, lavorando principalmente con apparecchiature <b>Siemens</b> e i Tool: <b>TIA Portal e SIMATIC Manager</b>.<br><br>
+    Ho inoltre sviluppato programmi per apparecchiature <b>Omron</b> utilizzando CX- Programmer e Sysmac Studio, utilizzando linguaggo Ladder e linguaggio strutturato Omron (ST).<br><br>
+    Oltre a queste competenze, ho acquisito capacità nella lettura di schemi elettrici e layout elettrici, con esperienza anche nel cablaggio di base.`,
+	bg: "linear-gradient(135deg, rgba(8, 10, 12, 0.95) 30%, rgba(155, 89, 182, 0.3) 100%), url('https://images.unsplash.com/photo-1518770660439-4636190af475?w=1600')" },
+  e80: { title: "E80 Group", desc: `Durante il mio stage ho lavorato nel reparto montaggio di componenti elettrici per LGV. In quel periodo ho imparato a usare gli strumenti giusti, a fare collegamenti elettrici precisi e a seguire le istruzioni tecniche con attenzione`, bg: "var(--img-e80)" },
+  horeca: { title: "Cameriere Capo Sala", desc: `Durante questa esperienza lavorativa, ho gestito il personale, accolto i clienti e assistito durante il servizio. Ho migliorato la mia comunicazine e l'attenzione ai dettaglio`, bg: "var(--img-horeca)" }
+ };
+
+function openExp(id){ 
+    const d = expData[id]; 
+    document.getElementById('exp-title').innerHTML = d.title; 
+    document.getElementById('exp-desc').innerHTML = d.desc; 
+    
+    // Mostra il popup
+    const page = document.getElementById('exp-page');
+    page.style.display = 'block';
+    page.scrollTop = 0; // Torna in alto ogni volta che apri
+
+    if(id === 'format') {
+        document.getElementById('sim-container').style.display = 'block';
+        initSim(); // Avvia simulatore
+        initTechBg(); // Avvia SCL verticale
+    } else {
+        document.getElementById('sim-container').style.display = 'none';
+        stopSim();
+        if(tID) cancelAnimationFrame(tID);
+        // Pulisce il canvas se non è Format
+        const tCtx = document.getElementById('tech-canvas').getContext('2d');
+        tCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    }
+}
+
+function closeExpAndScroll(targetId) {
+    // 1. Chiude il foglio delle esperienze
+    const expPage = document.getElementById('exp-page');
+    expPage.style.display = 'none';
+
+    // 2. Ferma tutte le animazioni attive per risparmiare risorse
+    stopSim(); 
+    if (tID) cancelAnimationFrame(tID);
+
+    // 3. Piccola pausa per assicurarsi che il layout sia tornato alla home
+    setTimeout(() => {
+        const el = document.getElementById(targetId);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 10);
+}
+
+ // --- CANVAS ANIMATION ---
+ const canvas = document.getElementById('canvas-bg');
+ const ctx = canvas.getContext('2d');
+ let particles = [];
+
+ function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+ }
+ window.addEventListener('resize', resize);
+ resize();
+
+ const mouse = { x: null, y: null };
+ window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+
+ class Particle {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.speedX = (Math.random() - 0.5) * 0.5;
+        this.speedY = (Math.random() - 0.5) * 0.5;
+    }
+    update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
+        if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
+
+        let dx = mouse.x - this.x;
+        let dy = mouse.y - this.y;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 150) {
+            this.x += dx * 0.01;
+            this.y += dy * 0.01;
+        }
+    }
+    draw() {
+        ctx.fillStyle = '#9b59b6';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+ function drawLines() {
+    for (let i = 0; i < particles.length; i++) {
+        for (let j = i; j < particles.length; j++) {
+            let dx = particles[i].x - particles[j].x;
+            let dy = particles[i].y - particles[j].y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < 150) {
+                ctx.strokeStyle = `rgba(155, 89, 182, ${1 - distance/150})`;
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                ctx.moveTo(particles[i].x, particles[i].y);
+                ctx.lineTo(particles[j].x, particles[j].y);
+                ctx.stroke();
+            }
+        }
+    }
+ }
+
+ function init() {
+    particles = [];
+    for (let i = 0; i < 80; i++) particles.push(new Particle());
+ }
+
+ function animate() {
+    ctx.fillStyle = '#080a0c';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => { p.update(); p.draw(); });
+    drawLines();
+    requestAnimationFrame(animate);
+ }
+
+ init();
+ animate();
+ 
+ // --- LOGICA SIMULAZIONE TRASLO-ELEVATORE ---
+const sCanvas = document.getElementById('sim-canvas');
+const sCtx = sCanvas.getContext('2d');
+let simActive = false;
+let simID; // <--- AGGIUNGI QUESTA RIGA: serve a memorizzare il ciclo di animazione
+
+// Configurazione Oggetti Aggiornata
+let traslo = { x: 150, y: 150, w: 40, h: 60 }; // Binario fisso a x:150
+let pallet = { x: 600, y: 50, w: 30, h: 30, aBordo: false };
+let conveyorY = 50; 
+let scambioX = 185; // Punto di arresto del pallet per il carico
+let magazzinoX = 50;
+let autoCycle = false;
+
+function initSim() {
+    sCanvas.width = document.querySelector('.exp-box').clientWidth;
+    sCanvas.height = 300;
+    simActive = true;
+
+    // --- AGGIUNGI QUESTA RIGA ---
+    if (simID) cancelAnimationFrame(simID); 
+    
+    simID = requestAnimationFrame(runSim);
+}
+
+function stopSim() { 
+    simActive = false; 
+    autoCycle = false; 
+    // --- AGGIUNGI QUESTA RIGA ---
+    cancelAnimationFrame(simID); 
+}
+
+// Input tastiera per simulazione
+window.addEventListener('keydown', (e) => {
+    if(!simActive) return;
+    if(e.key === 'a' || e.key === 'A') autoCycle = true;
+    
+// Manuale (Solo asse Y per il traslo, X per il pallet sul conveyor)
+    if(!autoCycle) {
+        if(e.key === 'ArrowUp') traslo.y -= 5;
+        if(e.key === 'ArrowDown') traslo.y += 5;
+        if(e.key === 'ArrowLeft' && pallet.x > scambioX) pallet.x -= 5;
+        if(e.key === 'ArrowRight') pallet.x += 5;
+    }
+});
+
+function runSim() {
+   if(!simActive) return;
+    
+    // Reset Canvas
+    sCtx.fillStyle = "#0a0a0a";
+    sCtx.fillRect(0, 0, sCanvas.width, sCanvas.height);
+
+    // 1. DISEGNO RULLIERA (Conveyor orizzontale)
+    sCtx.strokeStyle = "#333";
+    sCtx.lineWidth = 2;
+    for(let i=0; i<25; i++) {
+        sCtx.strokeRect(scambioX + (i*20), conveyorY, 20, 40);
+    }
+
+    // 2. DISEGNO SCAFFALI MAGAZZINO
+    sCtx.fillStyle = "#1a1a1a";
+    sCtx.fillRect(20, 20, 100, 260);
+    sCtx.strokeStyle = varProp('--accent-purple');
+    sCtx.strokeRect(20, 20, 100, 260);
+
+    // 3. LOGICA PLC (Automatico)
+// 3. LOGICA PLC (Automatico)
+// 3. LOGICA PLC (Automatico)
+    if(autoCycle) {
+        if(!pallet.aBordo) {
+            // FASE 1: Il conveyor porta il pallet al punto di scambio
+            if(pallet.x > scambioX) {
+                pallet.x -= 2; 
+            } else {
+                // FASE 2: Allineamento verticale traslo con pallet
+                // Centriamo il carrello (traslo.y) rispetto al pallet
+                if(Math.abs(traslo.y - (pallet.y - 15)) > 5) {
+                    traslo.y += (pallet.y - 15 > traslo.y) ? 2 : -2;
+                } else {
+                    pallet.aBordo = true; // Carico effettuato
+                }
+            }
+        } else {
+            // FASE 3: Traslo muove verticalmente verso il piano dello scaffale
+            let targetDepositoY = 180; 
+            if(Math.abs(traslo.y - targetDepositoY) > 5) {
+                traslo.y += (targetDepositoY > traslo.y) ? 2 : -2;
+            } else {
+                // FASE 4: SCARICO A SINISTRA
+                // Muoviamo il pallet verso lo scaffale (X=40)
+                if(pallet.x > 40) {
+                    pallet.x -= 2; 
+                } else {
+                    // FASE 5: SGANCIO E RESET
+                    pallet.aBordo = false; 
+                    autoCycle = false; // Ferma il ciclo per un istante
+                    
+                    // Delay per il reset (Simula il tempo di sgancio meccanico)
+                    setTimeout(() => {
+                        pallet.x = 600; 
+                        pallet.y = 50;
+                        traslo.y = 100; // Torna in posizione di home
+                        autoCycle = true; // Riapre il ciclo
+                    }, 1000);
+                }
+            }
+        }
+    }
+
+// 4. AGGIORNAMENTO POSIZIONE PALLET
+    // IMPORTANTE: Il pallet segue il traslo SOLO se è a bordo 
+    // E se non siamo già nella fase di scarico (X < traslo.x)
+    if(pallet.aBordo && pallet.x >= traslo.x - 10) {
+        pallet.x = traslo.x - 10; 
+        pallet.y = traslo.y + 15;
+    }
+
+    // 5. DISEGNO TRASLO (Viola) - Binario Fisso + Carrello Mobile
+    sCtx.fillStyle = "rgba(155, 89, 182, 0.2)";
+    sCtx.fillRect(traslo.x, 20, 10, 260); // Guida verticale
+    
+    sCtx.fillStyle = "#fff"; // Carrello traslo (si muove solo su e giù)
+    sCtx.fillRect(traslo.x - 15, traslo.y, 40, 60); 
+    
+    // 6. DISEGNO PALLET (Arancione)
+    sCtx.fillStyle = "#f39c12";
+    sCtx.fillRect(pallet.x, pallet.y, pallet.w, pallet.h);
+
+simID = requestAnimationFrame(runSim);
+}
+
+// Helper per leggere variabili CSS
+function varProp(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// --- EFFETTO SCRITTURA CODICE ORIZZONTALE (PLC SCL) ---
+const tCanvas = document.getElementById('tech-canvas');
+const tCtx = tCanvas.getContext('2d');
+let tID;
+let codeLines = [];
+
+// Stringhe realistiche di programmazione PLC
+const phrases = [
+    "IF \"DB_Auto\".Step = 10 THEN",
+    "  \"Valve_Control\" := TRUE;",
+    "  \"T_Safety\".IN := TRUE;",
+    "ELSIF \"Sensor_1\" = 1 THEN",
+    "  MOVE 100 TO \"Axis_Pos\";",
+    "  CALL \"FC_Check_Safety\";",
+    "  #Temp := \"IW_Analog\" * 0.1;",
+    "  FOR #i := 0 TO 5 DO",
+    "    \"Array\"[#i] := 0;",
+    "  END_FOR;",
+    "END_IF;",
+    "// Waiting for PLC feedback...",
+    "WHILE \"Axis_Busy\" DO",
+    "  \"Watchdog\" := TRUE;"
+];
+
+let activeLines = []; // Array per gestire le righe a schermo
+
+function initTechBg() {
+    const tCanvas = document.getElementById('tech-canvas');
+    const tCtx = tCanvas.getContext('2d');
+    
+    // Funzione per adattare il canvas alla finestra
+    function resizeCanvas() {
+        tCanvas.width = window.innerWidth;
+        tCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    
+    activeLines = []; 
+    
+    function updateSCL() {
+        tCtx.clearRect(0, 0, tCanvas.width, tCanvas.height);
+        tCtx.font = "15px 'Consolas', monospace";
+
+        // Aumentata la frequenza e il limite per riempire la pagina
+        if (Math.random() > 0.90 && activeLines.length < 50) { 
+            activeLines.push({
+                text: phrases[Math.floor(Math.random() * phrases.length)],
+                // X casuale tra il 5% e l'85% della larghezza schermo
+                x: Math.random() * (tCanvas.width * 0.8), 
+                y: tCanvas.height + 20, 
+                opacity: 1,
+                chars: 0,
+                speed: 0.5 + Math.random() * 0.5 // Velocità variabile per profondità
+            });
+        }
+
+        activeLines.forEach((line) => {
+            // Syntax Highlighting
+            if (line.text.includes("IF") || line.text.includes("END")) tCtx.fillStyle = "#569cd6";
+            else if (line.text.includes("//")) tCtx.fillStyle = "#6a9955";
+            else tCtx.fillStyle = "#d4d4d4";
+
+            tCtx.globalAlpha = line.opacity * 0.3; // Leggermente più trasparente
+            tCtx.fillText(line.text.substring(0, Math.floor(line.chars)), line.x, line.y);
+            
+            // Movimento verticale
+            line.y -= line.speed; 
+            
+            // Effetto scrittura
+            if (line.chars < line.text.length) line.chars += 0.4;
+
+            // Dissolvenza graduale verso l'alto
+            if (line.y < 200) line.opacity -= 0.005;
+        });
+
+        activeLines = activeLines.filter(l => l.opacity > 0);
+        tID = requestAnimationFrame(updateSCL);
+    }
+
+    if(tID) cancelAnimationFrame(tID);
+    updateSCL();
+}
+
+function drawCode(tCanvas, tCtx) {
+    // 1. Pulisce il canvas a ogni frame per l'animazione
+    tCtx.clearRect(0, 0, tCanvas.width, tCanvas.height);
+    
+    // 2. Imposta il font (Consolas è il classico dei sistemi Siemens/Windows)
+    tCtx.font = "14px 'Consolas', 'Courier New', monospace";
+
+    codeLines.forEach(line => {
+        // Calcola quanto testo mostrare (effetto macchina da scrivere)
+        let visibleText = line.text.substring(0, Math.floor(line.chars));
+        
+        // 3. LOGICA COLORI (Syntax Highlighting)
+        if (line.text.includes("IF") || line.text.includes("THEN") || line.text.includes("END_IF") || line.text.includes("WHILE")) {
+            tCtx.fillStyle = "#569cd6"; // Celeste: Keyword di controllo
+        } else if (line.text.includes("//")) {
+            tCtx.fillStyle = "#6a9955"; // Verde: Commenti
+        } else if (line.text.includes("\"") || line.text.includes(":=")) {
+            tCtx.fillStyle = "#ce9178"; // Arancione/Pesca: Variabili e Assegnazioni
+        } else {
+            tCtx.fillStyle = "#d4d4d4"; // Bianco sporco: Testo generico
+        }
+
+        // 4. DISEGNO SUL CANVAS
+        tCtx.globalAlpha = 0.5; // Opacità per non disturbare la lettura dei testi sopra
+        tCtx.fillText(visibleText, line.x, line.y);
+        
+        // 5. MOVIMENTO E PROGRESSIONE
+        line.x += line.speed; // Spostamento orizzontale
+        
+        if (line.chars < line.text.length) {
+            line.chars += 0.2; // Velocità di "scrittura" del testo
+        }
+
+        // 6. RESET RIGHE (quando escono dallo schermo a destra)
+        if (line.x > tCanvas.width) {
+            line.x = -350; // Rientra da sinistra
+            line.y = Math.random() * tCanvas.height; // Nuova altezza casuale
+            line.chars = 0; // Ricomincia a scrivere da capo
+            line.text = phrases[Math.floor(Math.random() * phrases.length)]; // Nuova frase casuale
+        }
+    });
+
+    // 7. Loop dell'animazione
+    tID = requestAnimationFrame(() => drawCode(tCanvas, tCtx));
+}
+ </script>
+</body>
+</html>
